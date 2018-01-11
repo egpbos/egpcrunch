@@ -1,0 +1,4 @@
+egpcrunch
+=========================
+
+.. automodule:: egpcrunch
