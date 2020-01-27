@@ -6,6 +6,15 @@ Number crunching module, used in cosmology research.
 ## Usage
 
 
+## Dependencies
+
+This project depends on xtensor, and specifically the xtensor-python bindings, so you need to install these.
+Unfortunately, these C++ packages are not available from pip, but you can use conda to install them:
+
+```sh
+conda install xtensor-python -c conda-forge
+```
+
 ## Installation
 
 **On Unix (Linux, macOS)**
