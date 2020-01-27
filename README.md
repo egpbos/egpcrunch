@@ -1,11 +1,12 @@
-egpcrunch
-=========
+# egpcrunch
 
 Number crunching module, used in cosmology research.
 
 
-Installation
-------------
+## Usage
+
+
+## Installation
 
 **On Unix (Linux, macOS)**
 
@@ -38,8 +39,7 @@ On macOS, if you installed gcc via MacPorts, you can get compiler issues. In tha
    rights on the machine, to be able to run the `vcvarsall.bat` script.
 
 
-Windows runtime requirements
-----------------------------
+## Windows runtime requirements
 
 On Windows, the Visual C++ 2015 redistributable packages are a runtime
 requirement for this project. It can be found [here](https://www.microsoft.com/en-us/download/details.aspx?id=48145).
@@ -60,8 +60,7 @@ requirements:
 ```
 
 
-Building the documentation
---------------------------
+## Building the documentation
 
 Documentation for the example project is generated using Sphinx. Sphinx has the
 ability to automatically inspect the signatures and documentation strings in
@@ -73,8 +72,7 @@ formats please refer to the Sphinx manual:
  - `make html`
 
 
-Running the tests
------------------
+## Running the tests
 
 Running the tests requires `pytest`.
 
@@ -83,7 +81,6 @@ py.test .
 ```
 
 
-Credits
--------
+## Credits
 
 All the "boilerplate" in this package was created in a minute or two using the [xtensor-python cookiecutter template](https://github.com/QuantStack/xtensor-python-cookiecutter).
