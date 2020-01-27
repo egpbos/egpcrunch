@@ -1,17 +1,11 @@
-#include "pybind11/pybind11.h"
-
-#include "xtensor/xmath.hpp"
-#include "xtensor/xarray.hpp"
-
-#define FORCE_IMPORT_ARRAY
-#include "xtensor-python/pyarray.hpp"
-#include "xtensor-python/pyvectorize.hpp"
-
 #include <iostream>
 #include <numeric>
 #include <cmath>
 #include <exception>
 #include <string>
+#include <random>
+
+#include "crunch.hpp"
 
 namespace py = pybind11;
 
@@ -153,6 +147,95 @@ ndarray density_SPH_simple(ULONG Nx, real_prec Lx,
 }
 
 
+
+// random grid creation
+
+xt::pyarray<double> resolution_independent_random_grid(std::size_t gridsize, unsigned int seed) {
+    std::mt19937 engine; // only initialize an RNG once! http://tinyurl.com/cwbqqvg
+    
+    // Create the output array:
+    xt::pyarray<double> out({gridsize, gridsize, (gridsize / 2 + 1)}, 0);
+
+    // Seed random number generator:
+    engine.seed(seed); // don't seed too much! http://tinyurl.com/cwbqqvg
+    
+    // Fill out:
+    for (std::size_t i = 0; i < gridsize / 2; i++) {
+        for (std::size_t k = 0; k < i+1; k++) {
+            for (std::size_t j = 0; j < i; j++)
+                // outpoint[i * i_stride + j * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out(i, j, k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i + 1; j++)
+                // outpoint[j * i_stride + i * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out(j, i, k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i; j++)
+                // outpoint[(gridsize - 1 - i) * i_stride + j * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out((gridsize - 1 - i), j, k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i + 1; j++)
+                // outpoint[(gridsize - 1 - j) * i_stride + i * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out((gridsize - 1 - j), i, k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i; j++)
+                // outpoint[i * i_stride + (gridsize - 1 - j) * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out(i, (gridsize - 1 - j), k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i + 1; j++)
+                // outpoint[j * i_stride + (gridsize - 1 - i) * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out(j, (gridsize - 1 - i), k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i; j++)
+                // outpoint[(gridsize - 1 - i) * i_stride + (gridsize - 1 - j) * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out((gridsize - 1 - i), (gridsize - 1 - j), k) = (double) ((unsigned long) engine()) / 0x100000000;
+            for (std::size_t j = 0; j < i + 1; j++)
+                // outpoint[(gridsize - 1 - j) * i_stride + (gridsize - 1 - i) * j_stride + k] = (double) ((unsigned long) engine()) / 0x100000000;
+                out((gridsize - 1 - j), (gridsize - 1 - i), k) = (double) ((unsigned long) engine()) / 0x100000000;
+        }
+        for (std::size_t j = 0; j < i; j++) {
+            for (std::size_t k = 0; k < i; k++) {
+                // outpoint[j * i_stride + k * j_stride + i] = (double) ((unsigned long) engine()) / 0x100000000;
+                out(j, k, i) = (double) ((unsigned long) engine()) / 0x100000000;
+                // outpoint[(gridsize - 1 - j) * i_stride + k * j_stride + i] = (double) ((unsigned long) engine()) / 0x100000000;
+                out((gridsize - 1 - j), k, i) = (double) ((unsigned long) engine()) / 0x100000000;
+                // outpoint[j * i_stride + (gridsize - 1 - k) * j_stride + i] = (double) ((unsigned long) engine()) / 0x100000000;
+                out(j, (gridsize - 1 - k), i) = (double) ((unsigned long) engine()) / 0x100000000;
+                // outpoint[(gridsize - 1 - j) * i_stride + (gridsize - 1 - k) * j_stride + i] = (double) ((unsigned long) engine()) / 0x100000000;
+                out((gridsize - 1 - j), (gridsize - 1 - k), i) = (double) ((unsigned long) engine()) / 0x100000000;
+            }
+        }
+    }
+    
+    // Fill out's nyquist plane:
+    for (std::size_t i = 0; i < gridsize; i++) {
+        for (std::size_t j = 0; j < gridsize; j++) {
+            // outpoint[i_stride*i + j_stride*j + gridsize/2] = (double) ((unsigned long) engine()) / 0x100000000;
+            out(i, j, gridsize/2) = (double) ((unsigned long) engine()) / 0x100000000;
+        }
+    }
+    
+    return out;
+}
+
+// EXTRA TEST FUNCTION FOR COMPARISON WITH numpy.random.random
+xt::pyarray<double> naive_random_grid(std::size_t gridsize, unsigned int seed) {
+    std::mt19937 engine; // only initialize an RNG once! http://tinyurl.com/cwbqqvg
+    
+    // Create the output array:
+    xt::pyarray<double> out({gridsize, gridsize, (gridsize/2+1)}, 0);
+
+    // Seed random number generator:
+    engine.seed(seed); // don't seed too much! http://tinyurl.com/cwbqqvg
+    
+    // Fill out:
+    for (std::size_t i = 0; i < gridsize / 2; i++) {
+        for (std::size_t k = 0; k < gridsize; k++) {
+            for (std::size_t j = 0; j < gridsize; j++) {
+                out(i, j, k) = (double) ((unsigned long) engine()) / 0x100000000;
+            }
+        }
+    }
+    
+    return out;
+}
+
+
+
 // Python Module and Docstrings
 
 PYBIND11_MODULE(egpcrunch, m) {
@@ -168,8 +251,12 @@ PYBIND11_MODULE(egpcrunch, m) {
 
            density_SPH
            density_SPH_simple
+           resolution_independent_random_grid
+           naive_random_grid
     )pbdoc";
 
     m.def("density_SPH", density_SPH, "Estimate the density of a set of particles using fixed-size SPH kernels");
     m.def("density_SPH_simple", density_SPH_simple, "Simple version of density_SPH, cubic box, no range selection and no masses");
+    m.def("resolution_independent_random_grid", resolution_independent_random_grid, "Build a random grid that can be used to build resolution independent random fields");
+    m.def("naive_random_grid", naive_random_grid, "Build a random grid that can NOT be used to build resolution independent random fields, i.e. the same way as regular numpy.random.random");
 }
