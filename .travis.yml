@@ -7,8 +7,11 @@ python:
 install:
   - source .ci/install_conda.sh
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION xtensor-python -c conda-forge
+  - conda init bash
   - conda activate test-environment
   - python -m pip install .
 
 # command to run tests
-script: py.test .
+script:
+  - conda activate test-environment
+  - py.test .
