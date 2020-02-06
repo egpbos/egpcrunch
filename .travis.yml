@@ -6,11 +6,10 @@ python:
 # command to install dependencies and the package itself
 install:
   - source .ci/install_conda.sh
-  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION xtensor-python -c conda-forge
+  - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION xtensor-python -c conda-forge pytest
   - source activate test-environment
   - python -m pip install .
 
 # command to run tests
 script:
-  - source activate test-environment
   - py.test .
